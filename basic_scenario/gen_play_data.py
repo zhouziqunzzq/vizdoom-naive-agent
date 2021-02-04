@@ -22,11 +22,11 @@ def setup_game_for_imitation(is_human_play: Optional[bool] = True) -> 'vzd.DoomG
     game = vzd.DoomGame()
 
     # load custom keybindings
-    game.set_doom_config_path("./_vizdoom.ini")
+    game.set_doom_config_path("../_vizdoom.ini")
     # load_config could be used to load configuration instead of doing it here with code.
     # If load_config is used in-code configuration will also work - most recent changes will add to previous ones.
     # game.load_config("../../scenarios/basic.cfg")
-    game.set_doom_scenario_path("./scenarios/basic.wad")
+    game.set_doom_scenario_path("../scenarios/basic.wad")
     game.set_doom_map("map01")
     game.set_screen_resolution(vzd.ScreenResolution.RES_640X480)
     game.set_screen_format(vzd.ScreenFormat.GRAY8)

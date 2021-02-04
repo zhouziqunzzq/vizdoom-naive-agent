@@ -91,4 +91,4 @@ def imitation_play(episodes: int):
 
 
 if __name__ == '__main__':
-    imitation_play(episodes=10)
+    imitation_play(episodes=20)
