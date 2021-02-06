@@ -6,7 +6,6 @@
 # @Desc  : DQN model
 # Ref: https://medium.com/analytics-vidhya/building-a-powerful-dqn-in-tensorflow-2-0-explanation-tutorial-d48ea8f3177a
 
-
 import tensorflow as tf
 from tensorflow.keras.initializers import VarianceScaling
 from tensorflow.keras.layers import (Add, Conv2D, Dense, Flatten, Input,
