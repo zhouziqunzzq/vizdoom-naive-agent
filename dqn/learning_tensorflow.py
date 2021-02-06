@@ -42,13 +42,13 @@ resolution = (30, 45)
 episodes_to_watch = 20
 
 save_model = True
-load = True
+load = False
 skip_learning = False
 watch = True
 
 # Configuration file path
-config_file_path = "../scenarios/deadly_corridor.cfg"
-model_savefolder = "./dqn_model"
+config_file_path = "../scenarios/simpler_basic.cfg"
+model_savefolder = "./demo_dqn_model"
 
 if len(tf.config.experimental.list_physical_devices('GPU')) > 0:
     print("GPU available")
@@ -70,7 +70,7 @@ def initialize_game():
     print("Initializing doom...")
     game = vzd.DoomGame()
     game.load_config(config_file_path)
-    game.set_window_visible(False)
+    game.set_window_visible(True)
     game.set_mode(vzd.Mode.PLAYER)
     game.set_screen_format(vzd.ScreenFormat.GRAY8)
     game.set_screen_resolution(vzd.ScreenResolution.RES_640X480)
@@ -113,8 +113,8 @@ class DQNAgent:
 
         row_ids = list(range(screen_buf.shape[0]))
 
-        ids = extractDigits(row_ids, actions)
-        done_ids = extractDigits(np.where(dones)[0])
+        ids = extract_digits(row_ids, actions)
+        done_ids = extract_digits(np.where(dones)[0])
 
         with tf.GradientTape() as tape:
             tape.watch(self.dqn.trainable_variables)
@@ -122,7 +122,7 @@ class DQNAgent:
             Q_prev = tf.gather_nd(self.dqn(screen_buf), ids)
 
             Q_next = self.target_net(next_screen_buf)
-            Q_next = tf.gather_nd(Q_next, extractDigits(row_ids, tf.argmax(agent.dqn(next_screen_buf), axis=1)))
+            Q_next = tf.gather_nd(Q_next, extract_digits(row_ids, tf.argmax(agent.dqn(next_screen_buf), axis=1)))
 
             q_target = rewards + self.discount_factor * Q_next
 
@@ -151,7 +151,7 @@ def split_tuple(samples):
     return screen_buf, actions, rewards, next_screen_buf, dones
 
 
-def extractDigits(*argv):
+def extract_digits(*argv):
     if len(argv) == 1:
         return list(map(lambda x: [x], argv[0]))
 
@@ -202,6 +202,7 @@ def run(agent, game, replay_memory):
                 agent.update_target_net()
 
         train_scores = np.array(train_scores)
+        print("epsilon: ", agent.epsilon)
         print("Results: mean: %.1f±%.1f," % (train_scores.mean(), train_scores.std()), \
               "min: %.1f," % train_scores.min(), "max: %.1f," % train_scores.max())
 

@@ -33,13 +33,17 @@ def build_q_network(
     model_input = Input(shape=(input_shape[0], input_shape[1], history_length))
     x = Lambda(lambda layer: layer / 255)(model_input)  # normalize by 255
 
-    x = Conv2D(32, (8, 8), strides=4, kernel_initializer=VarianceScaling(scale=2.),
+    # x = Conv2D(8, (6, 6), strides=4, kernel_initializer=VarianceScaling(scale=2.),
+    #            activation='relu', use_bias=False)(x)
+    # x = Conv2D(8, (3, 3), strides=2, kernel_initializer=VarianceScaling(scale=2.),
+    #            activation='relu', use_bias=False)(x)
+    x = Conv2D(8, (6, 6), strides=4, kernel_initializer=VarianceScaling(scale=2.),
                activation='relu', use_bias=False)(x)
-    x = Conv2D(64, (4, 4), strides=2, kernel_initializer=VarianceScaling(scale=2.),
+    x = Conv2D(16, (4, 4), strides=2, kernel_initializer=VarianceScaling(scale=2.),
                activation='relu', use_bias=False)(x)
-    x = Conv2D(64, (3, 3), strides=1, kernel_initializer=VarianceScaling(scale=2.),
+    x = Conv2D(16, (3, 3), strides=1, kernel_initializer=VarianceScaling(scale=2.),
                activation='relu', use_bias=False)(x)
-    x = Conv2D(128, (7, 7), strides=1, kernel_initializer=VarianceScaling(scale=2.),
+    x = Conv2D(32, (3, 3), strides=1, kernel_initializer=VarianceScaling(scale=2.),
                activation='relu', use_bias=False)(x)
 
     # Split into value and advantage streams

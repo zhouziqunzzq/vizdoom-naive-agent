@@ -19,10 +19,11 @@ from agent import DQNAgent
 # Loading and saving information.
 # If LOAD_FROM is None, it will train a new agent.
 # If SAVE_PATH is None, it will not save the agent
+# LOAD_FROM = None
 LOAD_FROM = 'saved_model'
 SAVE_PATH = 'saved_model'
-SAVE_REPLAY_BUFFER = False
-LOAD_REPLAY_BUFFER = False
+SAVE_REPLAY_BUFFER = True
+LOAD_REPLAY_BUFFER = True
 
 WRITE_TENSORBOARD = False
 TENSORBOARD_DIR = 'tf_board/'
@@ -37,9 +38,10 @@ USE_PER = False
 PRIORITY_SCALE = 0.7
 
 TOTAL_FRAMES = 30_000_000  # Total number of frames to train for
+EPS_ANNEALING_FRAMES = 700_000
 # MAX_EPISODE_LENGTH = 18000  # Maximum length of an episode (in frames)
-FRAMES_BETWEEN_EVAL = 100_000  # Number of frames between evaluations
-EVAL_LENGTH = 10_000  # Number of frames to evaluate for
+FRAMES_BETWEEN_EVAL = 10_000  # Number of frames between evaluations
+EVAL_LENGTH = 4000  # Number of frames to evaluate for
 
 DISCOUNT_FACTOR = 0.99  # Gamma, how much to discount future rewards
 MEM_SIZE = 10_000  # The maximum size of the replay buffer
@@ -54,9 +56,9 @@ BATCH_SIZE = 32  # Number of samples the agent learns from at once
 HISTORY_LENGTH = 4
 
 FRAMES_TO_SKIP = 4
-LEARNING_RATE = 0.00001
+LEARNING_RATE = 0.00025
 
-VISIBLE_TRAINING = False
+VISIBLE_TRAINING = True
 
 
 def train():
@@ -73,8 +75,8 @@ def train():
     writer = tf.summary.create_file_writer(TENSORBOARD_DIR)
 
     # Build main and target networks
-    main_dqn = build_q_network(NUM_ACTIONS, LEARNING_RATE, input_shape=INPUT_SHAPE)
-    target_dqn = build_q_network(NUM_ACTIONS, input_shape=INPUT_SHAPE)
+    main_dqn = build_q_network(NUM_ACTIONS, LEARNING_RATE, INPUT_SHAPE, HISTORY_LENGTH)
+    target_dqn = build_q_network(NUM_ACTIONS, LEARNING_RATE, INPUT_SHAPE, HISTORY_LENGTH)
 
     replay_buffer = ReplayBuffer(
         MEM_SIZE, INPUT_SHAPE, HISTORY_LENGTH, use_per=USE_PER
@@ -82,7 +84,10 @@ def train():
     agent = DQNAgent(
         main_dqn, target_dqn, replay_buffer, NUM_ACTIONS,
         INPUT_SHAPE, BATCH_SIZE, HISTORY_LENGTH,
-        use_per=USE_PER
+        eps_annealing_frames=EPS_ANNEALING_FRAMES,
+        replay_buffer_start_size=MEM_SIZE / 2,
+        max_frames=TOTAL_FRAMES,
+        use_per=USE_PER,
     )
 
     # load saved model
@@ -159,15 +164,22 @@ def train():
                             f'Game number: {str(len(rewards)).zfill(6)}  '
                             f'Frame number: {str(frame_number).zfill(8)}  '
                             f'Average reward: {np.mean(rewards[-10:]):0.1f}  '
-                            f'Time taken: {(time.time() - start_time):.1f}s'
+                            f'Std: {np.std(rewards[-10:]):0.1f}  '
+                            f'Min: {np.min(rewards[-10:]):0.1f}  '
+                            f'Max: {np.max(rewards[-10:]):0.1f}  '
+                            f'Time taken: {(time.time() - start_time):.1f}s  '
+                            f'Epsilon: {agent.calc_epsilon(frame_number):.4f}'
                         )
 
                 # Evaluation every `FRAMES_BETWEEN_EVAL` frames
+                print("")
+                print("Evaluating")
                 terminal = True
                 eval_rewards = []
                 evaluate_frame_number = 0
                 for _ in range(EVAL_LENGTH):
                     if terminal:
+                        print(".", end='', flush=True)
                         game_wrapper.reset()
                         episode_reward_sum = 0
                         terminal = False
@@ -188,6 +200,7 @@ def train():
                     final_score = episode_reward_sum
 
                 # Print score and write to tensorboard
+                print("")
                 print('Evaluation score:', final_score)
                 if WRITE_TENSORBOARD:
                     tf.summary.scalar('Evaluation score', final_score, frame_number)
@@ -210,7 +223,7 @@ def train():
         if SAVE_PATH is not None:
             print('Saving...')
             agent.save(
-                SAVE_PATH,
+                SAVE_PATH, save_replay_buffer=SAVE_REPLAY_BUFFER,
                 frame_number=frame_number, rewards=rewards, loss_list=loss_list
             )
             print('Saved.')

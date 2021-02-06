@@ -27,8 +27,8 @@ class DQNAgent(object):
             eps_final=0.1,
             eps_final_frame=0.01,
             eps_evaluation=0.0,
-            eps_annealing_frames=1000000,
-            replay_buffer_start_size=50000,
+            eps_annealing_frames=100_000,
+            replay_buffer_start_size=10_000,
             max_frames=25000000,
             use_per=True
     ):
